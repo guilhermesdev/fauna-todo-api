@@ -1,7 +1,6 @@
 require('dotenv').config();
 
 const express = require('express');
-const { Update } = require('faunadb');
 const faunadb = require('faunadb');
 const app = express();
 
@@ -24,7 +23,8 @@ const {
 	Paginate,
 	Ref,
 	Select,
-	Var,
+	Update,
+	Var
 } = faunadb.query;
 
 app.use(express.json());
@@ -34,9 +34,7 @@ app.get('/tasks', async (_req, res) => {
 		const { data: tasks } = await client.query(
 			Map(
 				Paginate(
-					Match(
-						Index('all_tasks')
-					),
+					Match(Index('all_tasks')),
 					{ size: 15 }
 				),
 				Lambda(
@@ -74,22 +72,19 @@ app.get('/tasks/:id', async (req, res) => {
 });
 
 app.post('/tasks', async (req, res) => {
-	const { text } = req.body;
-
 	try {
 		const createdTask = await client.query(
 			Create(
 				Collection('tasks'),
 				{
 					data: {
-						text,
+						text: req.body.text,
 						done: false
 					}
 				}
 			)
 		);
-
-		
+	
 		return res.json({
 			id: createdTask.ref.id,
 			ts: createdTask.ts,
@@ -135,4 +130,4 @@ app.patch('/tasks/:id', async (req, res) => {
 	}
 });
 
-app.listen(PORT, console.log('Server is running'));
+app.listen(PORT, () => console.log('Server is running at port', PORT));
